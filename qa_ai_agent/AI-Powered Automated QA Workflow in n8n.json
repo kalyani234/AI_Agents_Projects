@@ -1,0 +1,494 @@
+{
+  "name": "AI-Powered Automated QA Workflow in n8n",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1232,
+        -176
+      ],
+      "id": "67f51bff-9220-41a8-9f81-27d387370bba",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "bucketName": "qa-test-logs-ai",
+        "fileKey": "daily/qa_test_results.json"
+      },
+      "type": "n8n-nodes-base.awsS3",
+      "typeVersion": 2,
+      "position": [
+        -1024,
+        -176
+      ],
+      "id": "56b843cc-1e1c-4b31-97f6-e7a959ebfbbd",
+      "name": "Download Test_Results JSON from AWS S3",
+      "credentials": {
+        "aws": {
+          "id": "qRoadtxJlNweaAod",
+          "name": "AWS account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the binary buffer from the S3 node\nconst buffer = await this.helpers.getBinaryDataBuffer(0, 'data');\n\n// Convert to string\nconst jsonString = buffer.toString('utf8');\n\n// Parse JSON safely\nlet parsed;\ntry {\n  parsed = JSON.parse(jsonString);\n} catch (e) {\n  return [{ json: { error: 'Failed to parse JSON', message: e.message } }];\n}\n\n// Ensure arrays exist\nconst passed = Array.isArray(parsed.passed) ? parsed.passed : [];\nconst failed = Array.isArray(parsed.failed) ? parsed.failed : [];\n\n// Return two items: passed & failed\nreturn [\n  { json: { type: 'passed', tests: passed } },\n  { json: { type: 'failed', tests: failed } }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        -176
+      ],
+      "id": "190b3f26-4015-4c5a-8551-23198bc906fc",
+      "name": "Split JSON into Passed & Failed"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "175ba675-b452-4736-b4fc-19736daa655e",
+              "leftValue": "={{ $json.type }}",
+              "rightValue": "failed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -512,
+        -480
+      ],
+      "id": "161c3920-d845-41e7-b962-71bb2488281e",
+      "name": "Conditional Branch(Passed/Failed)"
+    },
+    {
+      "parameters": {
+        "resource": "assistant",
+        "operation": "create",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "GPT-3.5-TURBO"
+        },
+        "name": "QA Test Analyzer",
+        "description": "This defines the “brain” that will analyze failures",
+        "instructions": "You are a QA assistant. Analyze failed test results and provide:\n1. Likely reason for the failure\n2. Suggested action to fix it\n3. Severity (High / Medium / Low)\nReturn results as a JSON array with keys: test_name, reason, suggestion, severity.\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -496,
+        80
+      ],
+      "id": "2be6bcc4-e014-43d9-a12c-989a0bc87511",
+      "name": "Analyze Failed Tests",
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "TBeHOpZGBNshgwDR",
+          "name": "OpenAi account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "assistant",
+        "assistantId": {
+          "__rl": true,
+          "value": "asst_BVbuWH9FRtWaQ0sHPtoUcnW0",
+          "mode": "list",
+          "cachedResultName": "QA Test Analyzer"
+        },
+        "prompt": "define",
+        "text": "={{ $('Split JSON into Passed & Failed').item.json.tests }}\n\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -160,
+        -192
+      ],
+      "id": "6b3c7867-c19d-4812-bd38-80abbbf2bea4",
+      "name": "Map AI Suggestions",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "TBeHOpZGBNshgwDR",
+          "name": "OpenAi account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "courselearning28@gmail.com",
+        "subject": "=QA Test Failure: {{$json.test_name}}",
+        "emailType": "text",
+        "message": "=Test Name: {{$json.test_name}}\nReason: {{$json.reason}}\nSuggestion: {{$json.suggestion}}\nSeverity: {{$json.severity}}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        480,
+        -416
+      ],
+      "id": "0596944e-b146-4a85-bea9-39a8aefc5561",
+      "name": "Email NotificationI(Notify Team)",
+      "webhookId": "01bb0f9c-8d20-4cb3-8f88-6ba84af25b23",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bhEAFnF6DpGFyykw",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "name",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "name",
+          "value": "failed_tests"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "test_name": "={{ $json.test_name }}",
+            "reason": "={{ $json.reason }}",
+            "suggestion": "={{ $json.suggestion }}",
+            "severity": "={{ $json.severity }}",
+            "created_at": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "test_name",
+              "displayName": "test_name",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "suggestion",
+              "displayName": "suggestion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "severity",
+              "displayName": "severity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        672,
+        -48
+      ],
+      "id": "f501ede9-bd7f-4af1-a8d0-169649ac1166",
+      "name": "Save Failed Tests in PostgreSQL",
+      "credentials": {
+        "postgres": {
+          "id": "eRKmtece5YocimEq",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "project": {
+          "__rl": true,
+          "value": "10000",
+          "mode": "list",
+          "cachedResultName": "My Scrum Project"
+        },
+        "issueType": {
+          "__rl": true,
+          "value": "10004",
+          "mode": "list",
+          "cachedResultName": "Incident"
+        },
+        "summary": "=Failed Test: {{ $json.test_name }} -{{ $json.reason }}",
+        "additionalFields": {
+          "description": "=Reason: {{$json.reason}} Suggestion: {{$json.suggestion}} Severity: {{$json.severity}} "
+        }
+      },
+      "type": "n8n-nodes-base.jira",
+      "typeVersion": 1,
+      "position": [
+        528,
+        80
+      ],
+      "id": "4ef7205b-7022-4c2b-9159-e3654441a825",
+      "name": "Create Jira Tickets",
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "2e9faAHIhahzhWtM",
+          "name": "Jira SW Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the 'output' string from the OpenAI node\nlet outputString = $json.output;\n\n// Remove unnecessary line breaks and escape characters\noutputString = outputString.replace(/\\\\n/g, '').replace(/\\\\'/g, \"'\");\n\n// Parse the JSON safely\nlet parsedResults = [];\ntry {\n  parsedResults = JSON.parse(outputString);\n} catch (e) {\n  return [{ json: { error: 'Failed to parse OpenAI output', message: e.message, raw: outputString } }];\n}\n\n// Ensure it's an array\nif (!Array.isArray(parsedResults)) {\n  parsedResults = [parsedResults];\n}\n\n// Map each test result into n8n items\nreturn parsedResults.map(test => ({\n  json: test\n}));\n\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        128,
+        -160
+      ],
+      "id": "2cb7340e-595b-4c6b-b094-a7b24757bd9a",
+      "name": "Parse OpenAI Output",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect all incoming data from previous node(s)\nconst inputItems = $input.all();\nlet tests = [];\n\n// Handle common structures (flatten them if needed)\nfor (const item of inputItems) {\n  const data = item.json;\n\n  if (Array.isArray(data)) {\n    // Direct array case\n    tests.push(...data);\n  } else if (Array.isArray(data.results)) {\n    // If data has \"results\" array\n    tests.push(...data.results);\n  } else if (Array.isArray(data.tests)) {\n    // If data has \"tests\" array\n    tests.push(...data.tests);\n  } else if (data.test_name) {\n    // Single test object\n    tests.push(data);\n  }\n}\n\n// If no valid test objects found\nif (tests.length === 0) {\n  return [{\n    json: { error: 'No valid test data found', inputPreview: inputItems }\n  }];\n}\n\n// Convert to n8n items\nreturn tests.map(test => ({\n  json: {\n    test_name: test.test_name || 'Unknown Test',\n    reason: test.reason || 'No reason provided',\n    suggestion: test.suggestion || 'No suggestion available',\n    severity: test.severity || 'Unknown'\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        -160
+      ],
+      "id": "84223b55-699b-4907-a49b-633c68d3ad51",
+      "name": "Split Array into Individual Items",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09LH52N9L3",
+          "mode": "list",
+          "cachedResultName": "qa-updates"
+        },
+        "text": "=✅ *Test Run Summary*  \nAll passed tests have completed successfully! 🎉  \nTotal Passed Tests: {{ $json.tests.length }}  \n\nSample Passed Tests:  \n{{ $json.tests.map(t => t.test_name).slice(0, 3).join(', ') }}\n\n_Keep up the good work, QA team!_\n",
+        "otherOptions": {
+          "mrkdwn": true
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -208,
+        -464
+      ],
+      "id": "4bd19943-454b-4dde-aba6-f2960c7bf619",
+      "name": "Sent Passed results to Slack",
+      "webhookId": "f67cf6db-b6b3-4a5d-ba46-c75d71242c14",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "OB7ce8HIIWbZP0Mk",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Download Test_Results JSON from AWS S3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Test_Results JSON from AWS S3": {
+      "main": [
+        [
+          {
+            "node": "Split JSON into Passed & Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split JSON into Passed & Failed": {
+      "main": [
+        [
+          {
+            "node": "Conditional Branch(Passed/Failed)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Analyze Failed Tests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conditional Branch(Passed/Failed)": {
+      "main": [
+        [
+          {
+            "node": "Map AI Suggestions",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sent Passed results to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Failed Tests": {
+      "main": [
+        [
+          {
+            "node": "Map AI Suggestions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map AI Suggestions": {
+      "main": [
+        [
+          {
+            "node": "Parse OpenAI Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse OpenAI Output": {
+      "main": [
+        [
+          {
+            "node": "Split Array into Individual Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Array into Individual Items": {
+      "main": [
+        [
+          {
+            "node": "Email NotificationI(Notify Team)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Save Failed Tests in PostgreSQL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create Jira Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0fd10337-a4dc-4951-86fa-3c1dc05bd453",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c94fe09340f4e86235a5cbca9e9bfb3d21f5d8eccbe49f577615ce90d56df11b"
+  },
+  "id": "NSOdOkETaDN1x3O0",
+  "tags": []
+}
