@@ -79,6 +79,8 @@ It takes test results from your automation framework, analyzes failed tests with
 ## Overview
 An automated n8n workflow that fetches real-time English news, classifies each headline's sentiment using OpenAI GPT, stores results in Google Sheets, and emails a daily summary.
 
+![News Sentiment Analyser Workflow](https://github.com/kalyani234/AI_Agents_Projects/blob/n8n/N8N_workflow_News_Sentiment_Analyser.png?raw=true)
+
 ## Key Features
 - Fetches live headlines from NewsAPI
 - Runs sentiment analysis with GPT
