@@ -1,6 +1,6 @@
 # 1. AI-Powered Automated QA Workflow in n8n
 
-
+![AI-Powered QA Workflow](https://github.com/kalyani234/AI_Agents_Projects/blob/n8n/qa_ai_agent/AI-Powered%20Automated%20QA%20Workflow%20in%20n8n.png?raw=true)
 
 ## Project Overview
 This project automates the analysis, reporting, and tracking of automated test results using n8n, OpenAI, PostgreSQL, Jira, and Slack. 
