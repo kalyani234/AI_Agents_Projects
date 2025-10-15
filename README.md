@@ -1,30 +1,4 @@
-# 🧠 1. AI News Sentiment Monitor
-
-## Overview
-An automated n8n workflow that fetches real-time English news, classifies each headline's sentiment using OpenAI GPT, stores results in Google Sheets, and emails a daily summary.
-
-## Key Features
-- Fetches live headlines from NewsAPI
-- Runs sentiment analysis with GPT
-- Appends structured results to Google Sheets
-- Sends an email summary via Gmail
-- Fully automated (daily or hourly trigger)
-
-## Workflow Diagram
-```mermaid
-flowchart TD
-    A[Schedule Trigger - Daily] --> B[HTTP Request - Fetch NewsAPI Headlines]
-    B --> C[Function - Extract Titles & URLs]
-    C --> D[OpenAI API - Sentiment Analysis]
-    D --> E[Google Sheets - Append Results]
-    D --> F[Gmail - Send Summary]
-```
-
---------------------------------------------------------------------------------
-
-
-
-# 2. AI-Powered Automated QA Workflow in n8n
+# 1. AI-Powered Automated QA Workflow in n8n
 
 ## Project Overview
 This project automates the analysis, reporting, and tracking of automated test results using n8n, OpenAI, PostgreSQL, Jira, and Slack. 
@@ -32,8 +6,7 @@ It takes test results from your automation framework, analyzes failed tests with
 
 ## High-Level Workflow
 
-
-
+![Workflow Overview](qa_ai_agent/AI-Powered Automated QA Workflow in n8n.png)<img width="468" height="28" alt="image" src="https://github.com/user-attachments/assets/1ec9f6da-baa3-4baa-ab45-42b1e64b3b93" />
 
 ### Step 1 – Input the test results
 - Begin with JSON test results from your automation framework.
@@ -86,6 +59,32 @@ It takes test results from your automation framework, analyzes failed tests with
 - Passed tests are acknowledged in Slack.
 - AI provides insights for fixing failures.
 - Improves QA visibility and developer feedback loops.
+
+--------------------------------------------------------------
+
+# 🧠 2 . AI News Sentiment Monitor
+
+## Overview
+An automated n8n workflow that fetches real-time English news, classifies each headline's sentiment using OpenAI GPT, stores results in Google Sheets, and emails a daily summary.
+
+## Key Features
+- Fetches live headlines from NewsAPI
+- Runs sentiment analysis with GPT
+- Appends structured results to Google Sheets
+- Sends an email summary via Gmail
+- Fully automated (daily or hourly trigger)
+
+## Workflow Diagram
+```mermaid
+flowchart TD
+    A[Schedule Trigger - Daily] --> B[HTTP Request - Fetch NewsAPI Headlines]
+    B --> C[Function - Extract Titles & URLs]
+    C --> D[OpenAI API - Sentiment Analysis]
+    D --> E[Google Sheets - Append Results]
+    D --> F[Gmail - Send Summary]
+```
+
+--------------------------------------------------------------------------------
 
 
 
