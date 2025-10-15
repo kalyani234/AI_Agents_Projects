@@ -42,7 +42,8 @@ It takes test results from your automation framework, analyzes failed tests with
 - Use Slack webhook URL.
 - Send messages for passed and failed tests.
 
-  src="https://github.com/user-attachments/assets/527ff3d2-bc76-4424-b30b-b3861de19c00" />
+  ![Slack_notification]( https://github.com/user-attachments/assets/527ff3d2-bc76-4424-b30b-b3861de19c00)<img width="468" height="41" alt="image" src="https://github.com/user-attachments/assets/67f669bb-f531-4ce6-a404-111122d91c62" />
+
 
 ### Step 9 – Workflow Orchestration
 - Nodes connected in order:
