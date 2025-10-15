@@ -1,12 +1,16 @@
 # 1. AI-Powered Automated QA Workflow in n8n
 
-![AI-Powered QA Workflow](https://github.com/kalyani234/AI_Agents_Projects/blob/n8n/qa_ai_agent/AI-Powered%20Automated%20QA%20Workflow%20in%20n8n.png?raw=true)
-
 ## Project Overview
-This project automates the analysis, reporting, and tracking of automated test results using n8n, OpenAI, PostgreSQL, Jira, and Slack. 
+This project automates the analysis, reporting, and tracking of automated test results using n8n, Gmail, OpenAI, PostgreSQL, Jira, and Slack. 
 It takes test results from your automation framework, analyzes failed tests with AI, stores them in a database, creates Jira bug tickets, and sends Slack notifications for passed tests.
 
+![AI-Powered QA Workflow](https://github.com/kalyani234/AI_Agents_Projects/blob/n8n/qa_ai_agent/AI-Powered%20Automated%20QA%20Workflow%20in%20n8n.png?raw=true)
+
 ## High-Level Workflow
+
+### AWS S3 Test Results bucket
+
+![AWS S3 Integration](https://github.com/kalyani234/AI_Agents_Projects/blob/n8n/qa_ai_agent/AWS_S3.png?raw=true)
 
 ### Step 1 – Input the test results
 - Begin with JSON test results from your automation framework.
@@ -25,23 +29,30 @@ It takes test results from your automation framework, analyzes failed tests with
 2. **Split AI Results**: Separate array into individual n8n items.
 3. **Store in PostgreSQL**: Insert failed test records into a database table.
 4. **Create Jira Tickets**: Automatically create bug tickets with test details.
-5. **Notifications**: Send email or Slack alerts summarizing failed tests.
+5. **Notifications**: Send email alerts summarizing failed tests.
 
-### Step 5 – Process passed test cases
+### Step 5 – Slack Process passed test cases
 - Send Slack notification for successfully passed tests with summary messages.
 
+![Slack Notification](https://github.com/kalyani234/AI_Agents_Projects/blob/n8n/qa_ai_agent/Passed_slack_notification.png?raw=true)
+
 ### Step 6 – Database Configuration
-- PostgreSQL table 'failed_tests' with columns: id, test_name, reason, suggestion, severity, created_at.
+- PostgreSQL table 'failed_tests' with columns: id, test_name, reason, suggestion, severity, created_at using **supabase**.
 - n8n connects using host, user, password, port, and database name.
+  
+![Save Test Results PostgresDB](https://github.com/kalyani234/AI_Agents_Projects/blob/n8n/qa_ai_agent/Save_TestResults_PostgesDB.png?raw=true)
 
 ### Step 7 – Jira API Setup
 - Authenticate with email and API token.
 - Choose project and issue type, map test details to ticket fields.
 
-### Step 8 – Slack Notification Setup
-- Use Slack webhook URL.
-- Send messages for passed and failed tests.
+![Jira Tickets Creation](https://github.com/kalyani234/AI_Agents_Projects/blob/n8n/qa_ai_agent/Jira_tickets_creation.png?raw=true)
 
+### Step 8 – Gmail Notification Setup
+- Use Gmail Oauth credentials.
+- Send messages for failed tests.
+
+![Gmail Notification](https://github.com/kalyani234/AI_Agents_Projects/blob/n8n/qa_ai_agent/Gmail_notification.png?raw=true)
 
 ### Step 9 – Workflow Orchestration
 - Nodes connected in order:
