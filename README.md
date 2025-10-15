@@ -1,6 +1,6 @@
 # 1. AI-Powered Automated QA Workflow in n8n
 
-![Workflow Overview]( https://github.com/user-attachments/assets/6300da38-7b10-4687-bb9f-7b525eba1cdd)<img width="468" height="41" alt="image" src="https://github.com/user-attachments/assets/527ff3d2-bc76-4424-b30b-b3861de19c00" />
+
 
 ## Project Overview
 This project automates the analysis, reporting, and tracking of automated test results using n8n, OpenAI, PostgreSQL, Jira, and Slack. 
@@ -41,6 +41,8 @@ It takes test results from your automation framework, analyzes failed tests with
 ### Step 8 – Slack Notification Setup
 - Use Slack webhook URL.
 - Send messages for passed and failed tests.
+
+  src="https://github.com/user-attachments/assets/527ff3d2-bc76-4424-b30b-b3861de19c00" />
 
 ### Step 9 – Workflow Orchestration
 - Nodes connected in order:
