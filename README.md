@@ -6,8 +6,6 @@ It takes test results from your automation framework, analyzes failed tests with
 
 ## High-Level Workflow
 
-![Workflow Overview](qa_ai_agent/<img width="468" height="28" alt="image" src="https://github.com/user-attachments/assets/1ec9f6da-baa3-4baa-ab45-42b1e64b3b93" />)
-
 ### Step 1 – Input the test results
 - Begin with JSON test results from your automation framework.
 - Each test includes name, status (passed/failed), and messages.
