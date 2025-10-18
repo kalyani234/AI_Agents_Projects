@@ -1,0 +1,273 @@
+{
+  "name": "Automated News Intelligence Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -480,
+        -112
+      ],
+      "id": "bd7b3bb7-0075-47f1-9a0d-14e8fc566086",
+      "name": "Schedule Trigger",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Debug: view incoming data\nconsole.log($input.all());\n\n// Get all articles from the incoming NewsAPI data\nconst articles = $input.all()[0].json.articles; // removed .slice(0, 10)\n\n// Map to a clean output structure\nreturn articles.map(article => ({\n  json: {\n    title: article.title,\n    url: article.url\n  }\n}));\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        -112
+      ],
+      "id": "5bf7e2af-f402-4a4e-a60f-11d3207004ba",
+      "name": "Extract Headlines",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer api"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-3.5-turbo\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Classify the sentiment (Positive, Neutral, Negative) of this headline: {{ $json.title.replace(/\\\"/g, '\\\\\"') }}\"\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        128,
+        -112
+      ],
+      "id": "38cde887-353a-4541-b300-9cad42c4d052",
+      "name": "Sentiment Analysis",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "sendTo": "courselearning28@gmail.com",
+        "subject": "=Daily Financial Sentiment Summary – {{ new Date().toISOString().slice(0,10) }}",
+        "emailType": "text",
+        "message": "=📊 Daily Financial Sentiment Summary ({{ new Date().toISOString().slice(0,10) }})\n\nPositive: {{ $items().filter(i => i.json.Sentiment === \"Positive\").length }}\nNeutral: {{ $items().filter(i => i.json.Sentiment === \"Neutral\").length }}\nNegative: {{ $items().filter(i => i.json.Sentiment === \"Negative\").length }}\n\nTop 2 Positive Headlines:\n1. {{ $items().filter(i => i.json.Sentiment === \"Positive\")[0].json.Title }}\n2. {{ $items().filter(i => i.json.Sentiment === \"Positive\")[1].json.Title }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        544,
+        -112
+      ],
+      "id": "857d52c8-6e5c-4187-b948-c11692465fc2",
+      "name": "Send Daily Summary",
+      "webhookId": "8da7409f-9292-4381-91fe-9bd155ed0be9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4IkMq07HCYi1Qc7U",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1x04hh535lms1OuDI0-mGtMdW28XyUDzt_U1VROE_-HU",
+          "mode": "list",
+          "cachedResultName": "Financial Sentiment",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1x04hh535lms1OuDI0-mGtMdW28XyUDzt_U1VROE_-HU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1x04hh535lms1OuDI0-mGtMdW28XyUDzt_U1VROE_-HU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Title": "={{ $('Extract Headlines').item.json.title }}",
+            "URL": "={{ $('Extract Headlines').item.json.url }}",
+            "Sentiment": "={{ $json.choices[0].message.content }}",
+            "Date ": "={{ new Date().toISOString().slice(0,10) }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date ",
+              "displayName": "Date ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sentiment",
+              "displayName": "Sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        336,
+        -112
+      ],
+      "id": "d534a9ce-b876-4f95-be52-4646a13a4cad",
+      "name": "Store Results in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IG4MLK05x0aBycjS",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://newsapi.org/v2/top-headlines?category=general&language=en&apiKey=611037f15e07483ab61c881a4b91c7ba",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -288,
+        -112
+      ],
+      "id": "c97cd92c-02b0-422b-bb49-414763f1f420",
+      "name": "Fetch News",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Headlines": {
+      "main": [
+        [
+          {
+            "node": "Sentiment Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sentiment Analysis": {
+      "main": [
+        [
+          {
+            "node": "Store Results in Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Results in Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch News": {
+      "main": [
+        [
+          {
+            "node": "Extract Headlines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "278e1397-6202-4819-ac5b-bd647a630615",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c94fe09340f4e86235a5cbca9e9bfb3d21f5d8eccbe49f577615ce90d56df11b"
+  },
+  "id": "0KVRdhDk6Ldo4OW2",
+  "tags": []
+}
